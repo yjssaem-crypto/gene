@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>만약 내가... - 유전자 편집 윤리 시뮬레이션</title>
+    <style>
+        :root {
+            --primary: #4A90E2;
+            --primary-dark: #357ABD;
+            --secondary: #50E3C2;
+            --bg-color: #F4F7F6;
+            --card-bg: #FFFFFF;
+            --text-color: #333333;
+            --text-sub: #666666;
+            --danger: #E74C3C;
+            --warning: #F39C12;
+            --border-radius: 12px;
+            --shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+            position: relative;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #EAEAEA;
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            color: var(--primary-dark);
+        }
+
+        .budget-badge {
+            background: #EBF5FF;
+            color: var(--primary-dark);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1rem;
+            border: 1px solid var(--primary);
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Buttons */
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .btn:hover { background: var(--primary-dark); }
+        .btn:disabled { background: #CCC; cursor: not-allowed; }
+        .btn-secondary { background: #7F8C8D; }
+        .btn-secondary:hover { background: #606F7B; }
+        .btn-admin { width: auto; padding: 6px 12px; font-size: 0.85rem; background: #34495E; }
+
+        /* Form Controls & Grid */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            max-height: 520px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .trait-card {
+            background: #FAFAFA;
+            border: 1px solid #E0E0E0;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .trait-card label {
+            display: block;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            color: #444;
+        }
+
+        .trait-card select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #CCC;
+            font-size: 0.9rem;
+        }
+
+        /* Lock Overlay */
+        .lock-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: var(--border-radius);
+            z-index: 100;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .lock-overlay h2 { color: var(--danger); margin-bottom: 10px; }
+        .lock-overlay p { color: var(--text-sub); margin-bottom: 20px; line-height: 1.5; }
+
+        /* Character Card */
+        .character-card {
+            background: #F8FAFC;
+            border: 2px solid #A29BFE;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .avatar {
+            font-size: 4rem;
+            margin-bottom: 10px;
+        }
+
+        .trait-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .tag {
+            background: #E2E8F0;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: #4A5568;
+        }
+
+        /* Admin Table & Cards */
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .student-result-card {
+            border: 1px solid #DDD;
+            border-radius: 8px;
+            padding: 12px;
+            background: #FFF;
+            font-size: 0.85rem;
+        }
+
+        .discussion-box {
+            background: #FFF5F5;
+            border-left: 4px solid var(--danger);
+            padding: 12px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #C53030;
+        }
+
+        .discussion-box h4 { margin-bottom: 6px; }
+        .discussion-box ul { margin-left: 18px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <h1>🧬 유전자 편집 시뮬레이션</h1>
+        <div id="budget-display" class="budget-badge" style="display:none;">예산: -</div>
+        <button class="btn btn-admin" onclick="toggleAdmin()">교사 전용 창</button>
+    </header>
+
+    <!-- 1단계: 자금 뽑기 -->
+    <div id="screen-1" class="screen active">
+        <h2>1단계: 나의 가계 자금 결정</h2>
+        <p style="margin: 10px 0 20px 0; color: var(--text-sub);">
+            아이의 맞춤형 유전자 편집을 위한 자금을 뽑습니다. 가계의 경제력에 따라 지원받는 기본 유전자 편집 자금이 결정됩니다.
+        </p>
+        <button class="btn" onclick="drawBudget()">🎲 랜덤 자금 뽑기</button>
+        <div id="draw-result" style="margin-top: 20px; text-align: center; font-weight: bold; font-size: 1.2rem; color: var(--primary-dark);"></div>
+        <button id="btn-to-step2" class="btn" style="display:none;" onclick="goToStep(2)">2단계: 유전자 형질 선택하기 ➔</button>
+    </div>
+
+    <!-- 2단계: 유전자 형질 선택 -->
+    <div id="screen-2" class="screen">
+        <h2>2단계: 아이의 맞춤형 유전자 선택</h2>
+        <p style="margin-bottom: 12px; font-size: 0.9rem; color: var(--text-sub);">
+            남은 예산 범위 내에서 태어날 아이의 형질을 자유롭게 디자인하세요.
+        </p>
+        <div class="grid-container" id="traits-form"></div>
+        <button class="btn" onclick="submitTraits()">유전자 설계 완료 및 제출 ➔</button>
+    </div>
+
+    <!-- 3단계 대기화면 (교사의 1차 제어로 해제) -->
+    <div id="screen-3-wait" class="screen">
+        <div class="lock-overlay">
+            <h2>🛑 잠시 대기해주세요</h2>
+            <p>모든 학생이 유전자 설계를 마칠 때까지 기다려주세요.<br>선생님 화면에서 1차 시뮬레이션 결과(외모/성능/계층)를 함께 확인합니다.</p>
+        </div>
+    </div>
+
+    <!-- 4단계 & 5단계: 아이의 꿈과 부모의 선택 -->
+    <div id="screen-4" class="screen">
+        <h2>4단계 & 5단계: 아이의 꿈과 부모의 지원 선택</h2>
+        <div class="character-card" id="child-profile"></div>
+
+        <div style="background: #FFFBEB; border: 1px solid #FCD34D; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+            <h3 style="color: #B45309; font-size: 1.1rem; margin-bottom: 5px;">🌟 아이가 자라나 꿈을 가졌습니다!</h3>
+            <p id="child-dream-text" style="font-size: 1.2rem; font-weight: bold; color: #78350F;"></p>
+        </div>
+
+        <p style="margin-bottom: 15px; font-size: 0.95rem; line-height: 1.5;">
+            부모로서 당신은 유전자 편집으로 맞춰준 능력(또는 한계)을 바탕으로 아이가 희망하는 꿈을 전폭적으로 밀어주겠습니까, 아니면 다른 길을 권하겠습니까?
+        </p>
+
+        <div style="display: flex; gap: 10px;">
+            <button class="btn" onclick="chooseSupport(true)">아이의 꿈을 적극 밀어준다</button>
+            <button class="btn btn-secondary" onclick="chooseSupport(false)">밀어주지 않는다 (다른 길 권유)</button>
+        </div>
+    </div>
+
+    <!-- 6단계 대기화면 (교사의 2차 제어로 최종 성찰) -->
+    <div id="screen-6-wait" class="screen">
+        <div class="lock-overlay">
+            <h2>🏁 시뮬레이션 종료 및 종합 토론</h2>
+            <p>모든 선택이 완료되었습니다.<br>선생님 화면을 보며 인간 향상 기술이 가져올 윤리적 문제점을 함께 토론해봅시다.</p>
+        </div>
+    </div>
+
+    <!-- 교사 관리자 화면 (모달/섹션) -->
+    <div id="screen-admin" class="screen">
+        <h2 style="color: var(--primary-dark); margin-bottom: 10px;">👩‍🏫 교사 전용 대시보드 (실시간 결과 모니터링)</h2>
+        <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+            <button class="btn btn-admin" style="background: var(--danger);" onclick="setGameState('STAGE1_LOCK')">🔒 1차 중지 (3단계 대기 화면 전환)</button>
+            <button class="btn btn-admin" style="background: var(--warning);" onclick="setGameState('STAGE2_START')">▶️ 4단계 시작 (아이의 꿈 진입)</button>
+            <button class="btn btn-admin" style="background: var(--danger);" onclick="setGameState('STAGE2_LOCK')">🔒 2차 중지 (최종 6단계 전환)</button>
+            <button class="btn btn-admin" style="background: #718096;" onclick="resetAllData()">🔄 전체 데이터 초기화</button>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <h3>📊 제출 현황 (총 <span id="admin-count">0</span>명)</h3>
+            <div class="admin-grid" id="admin-student-list"></div>
+        </div>
+
+        <div class="discussion-box" id="admin-discussion-1">
+            <h4>🚨 [3단계 토론 포인트] 유전자 향상과 사회적 불평등</h4>
+            <ul>
+                <li><strong>경제력 차이로 인한 차별:</strong> 부유한 가계만 뛰어난 유전자를 구매하여 계층 고착화 및 신종 차별 발생.</li>
+                <li><strong>개성과 정체성 상실:</strong> 선호도가 높은 특정 외모·능력에 편중되어 인간의 다양성이 파괴됨.</li>
+            </ul>
+        </div>
+
+        <div class="discussion-box" id="admin-discussion-2" style="margin-top: 10px; background: #F0FFF4; border-color: #38A169; color: #276749;">
+            <h4>🚨 [6단계 토론 포인트] 인간 존엄성 및 정체성 위기</h4>
+            <ul>
+                <li><strong>노력의 무의미화:</strong> 타고난 유전자가 성패를 결정하여 극복의 의지와 삶의 보람 상실.</li>
+                <li><strong>정체성 혼란:</strong> 부모가 설계한대로 살아가는 수동적 삶 vs 자아 정체성 탐색의 부재.</li>
+                <li><strong>경쟁의 심화:</strong> 향상된 인간들 간의 과도한 스펙 경쟁 및 사회적 다양성/변수 대응력 저하.</li>
+            </ul>
+        </div>
+        <button class="btn btn-secondary" style="margin-top: 15px;" onclick="toggleAdmin()">학생 화면으로 돌아가기</button>
+    </div>
+</div>
+
+<script>
+    const BUDGET_OPTIONS = [
+        { label: "하위 20% (서민)", amount: 100 },
+        { label: "중위 40% (중산층)", amount: 300 },
+        { label: "상위 30% (우수)", amount: 500 },
+        { label: "상위 9% (부유층)", amount: 800 },
+        { label: "상위 1% (최고 자산가)", amount: 1200 }
+    ];
+
+    const DREAMS = ["모델", "과학자", "수학자", "음악가", "화가", "운동 선수", "작가"];
+
+    const TRAITS_SCHEMA = [
+        { id: "gender", name: "성별", options: [{val:"남성", cost:0}, {val:"여성", cost:0}, {val:"선택 안함(랜덤)", cost:0}] },
+        { id: "skin", name: "피부색", options: [{val:"기본", cost:0}, {val:"밝은 톤", cost:20}, {val:"커스텀 톤", cost:40}] },
+        { id: "hair", name: "머리색", options: [{val:"검정", cost:0}, {val:"갈색", cost:10}, {val:"금발/특수색", cost:30}] },
+        { id: "eyes", name: "눈동자색", options: [{val:"갈색", cost:0}, {val:"푸른색", cost:20}, {val:"신비로운 에메랄드", cost:40}] },
+        { id: "doubleEyelid", name: "쌍꺼풀 여부", options: [{val:"무쌍", cost:0}, {val:"겉쌍꺼풀", cost:15}, {val:"속쌍꺼풀", cost:15}] },
+        { id: "height", name: "예상 키", options: [{val:"평균 범위(165-175cm)", cost:0}, {val:"상위 10%(180cm+)", cost:50}, {val:"최상위 모델급(185cm+)", cost:100}] },
+        { id: "lifespan", name: "기대수명", options: [{val:"80세 (기본)", cost:0}, {val:"100세", cost:80}, {val:"120세 (최상급 유전자)", cost:180}] },
+        { id: "disease", name: "유전병 예방", options: [{val:"미제거", cost:0}, {val:"주요 유전병 제거", cost:70}, {val:"완전 면역 체계", cost:150}] },
+        { id: "disability", name: "선천적 장애 제거", options: [{val:"미제거", cost:0}, {val:"100% 교정 제거", cost:80}] },
+        { id: "math", name: "수학 공부 능력", options: [{val:"보통", cost:0}, {val:"우수", cost:60}, {val:"수학 천재", cost:120}] },
+        { id: "science", name: "과학 공부 능력", options: [{val:"보통", cost:0}, {val:"우수", cost:60}, {val:"아인슈타인급", cost:120}] },
+        { id: "music", name: "음악적 재능", options: [{val:"보통", cost:0}, {val:"절대음감", cost:50}, {val:"천재 작곡가 기질", cost:100}] },
+        { id: "art", name: "미술적 재능", options: [{val:"보통", cost:0}, {val:"뛰어난 색채감", cost:50}, {val:"거장 미술가 기질", cost:100}] },
+        { id: "sports", name: "운동 신경", options: [{val:"보통", cost:0}, {val:"체육 우수", cost:60}, {val:"올림픽 국가대표급", cost:130}] },
+        { id: "emotion", name: "감수성/공감능력", options: [{val:"보통", cost:0}, {val:"풍부함", cost:30}, {val:"최고 수준의 리더십/공감", cost:70}] }
+    ];
+
+    let myStudentId = localStorage.getItem('my_student_id') || 'student_' + Math.floor(Math.random()*899999 + 100000);
+    localStorage.setItem('my_student_id', myStudentId);
+
+    let myState = {
+        studentId: myStudentId,
+        budget: 0,
+        budgetLabel: '',
+        selectedTraits: {},
+        totalSpent: 0,
+        dream: '',
+        supportDream: null
+    };
+
+    window.onload = function() {
+        renderTraitsForm();
+        checkGameState();
+        setInterval(checkGameState, 2000);
+    };
+
+    function goToScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    function checkGameState() {
+        const gameState = localStorage.getItem('game_state') || 'STEP1';
+        
+        if (!document.getElementById('screen-admin').classList.contains('active')) {
+            if (gameState === 'STAGE1_LOCK' && myState.totalSpent > 0 && !myState.dream) {
+                goToScreen('screen-3-wait');
+            } else if (gameState === 'STAGE2_START' && myState.totalSpent > 0 && !myState.dream) {
+                initStep4();
+            } else if (gameState === 'STAGE2_LOCK' && myState.supportDream !== null) {
+                goToScreen('screen-6-wait');
+            }
+        }
+
+        updateAdminDashboard();
+    }
+
+    function drawBudget() {
+        const randomObj = BUDGET_OPTIONS[Math.floor(Math.random() * BUDGET_OPTIONS.length)];
+        myState.budget = randomObj.amount;
+        myState.budgetLabel = randomObj.label;
+
+        document.getElementById('draw-result').innerText = `당신의 가계 자금: ${randomObj.label} (${randomObj.amount}만 포인트)`;
+        document.getElementById('budget-display').style.display = 'block';
+        document.getElementById('budget-display').innerText = `남은 예산: ${myState.budget}만 포인트`;
+        document.getElementById('btn-to-step2').style.display = 'block';
+    }
+
+    function goToStep(step) {
+        if(step === 2) goToScreen('screen-2');
+    }
+
+    function renderTraitsForm() {
+        const container = document.getElementById('traits-form');
+        container.innerHTML = '';
+
+        TRAITS_SCHEMA.forEach(trait => {
+            const card = document.createElement('div');
+            card.className = 'trait-card';
+
+            let optionsHTML = trait.options.map((opt, idx) => 
+                `<option value="${idx}">${opt.val} (${opt.cost}만)</option>`
+            ).join('');
+
+            card.innerHTML = `
+                <label>${trait.name}</label>
+                <select id="trait-${trait.id}" onchange="calculateCost()">
+                    ${optionsHTML}
+                </select>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function calculateCost() {
+        let total = 0;
+        TRAITS_SCHEMA.forEach(trait => {
+            const select = document.getElementById(`trait-${trait.id}`);
+            const selectedIdx = select.value;
+            total += trait.options[selectedIdx].cost;
+        });
+
+        const remaining = myState.budget - total;
+        const budgetDisplay = document.getElementById('budget-display');
+        
+        if (remaining < 0) {
+            budgetDisplay.style.color = 'var(--danger)';
+            budgetDisplay.innerText = `예산 초과! (${remaining}만 포인트)`;
+        } else {
+            budgetDisplay.style.color = 'var(--primary-dark)';
+            budgetDisplay.innerText = `남은 예산: ${remaining}만 포인트`;
+        }
+        return { total, remaining };
+    }
+
+    function submitTraits() {
+        const { total, remaining } = calculateCost();
+        if (remaining < 0) {
+            alert("보유한 자금을 초과하여 유전자를 선택할 수 없습니다! 선택을 조정해주세요.");
+            return;
+        }
+
+        myState.totalSpent = total;
+        TRAITS_SCHEMA.forEach(trait => {
+            const select = document.getElementById(`trait-${trait.id}`);
+            const opt = trait.options[select.value];
+            myState.selectedTraits[trait.name] = opt.val;
+        });
+
+        saveStudentData();
+        goToScreen('screen-3-wait');
+    }
+
+    function initStep4() {
+        if (!myState.dream) {
+            myState.dream = DREAMS[Math.floor(Math.random() * DREAMS.length)];
+        }
+
+        const profileBox = document.getElementById('child-profile');
+        const traitsTags = Object.entries(myState.selectedTraits)
+            .map(([k, v]) => `<span class="tag">${k}: ${v}</span>`).join('');
+
+        profileBox.innerHTML = `
+            <div class="avatar">👶</div>
+            <h3>성장한 나의 아이</h3>
+            <div class="trait-tags">${traitsTags}</div>
+        `;
+
+        document.getElementById('child-dream-text').innerText = `"${myState.dream}"`;
+        goToScreen('screen-4');
+    }
+
+    function chooseSupport(isSupported) {
+        myState.supportDream = isSupported;
+        saveStudentData();
+        goToScreen('screen-6-wait');
+    }
+
+    function saveStudentData() {
+        let allData = JSON.parse(localStorage.getItem('all_students_data') || '{}');
+        allData[myStudentId] = myState;
+        localStorage.setItem('all_students_data', JSON.stringify(allData));
+    }
+
+    function toggleAdmin() {
+        const adminScreen = document.getElementById('screen-admin');
+        if (adminScreen.classList.contains('active')) {
+            goToScreen('screen-1');
+        } else {
+            goToScreen('screen-admin');
+            updateAdminDashboard();
+        }
+    }
+
+    function setGameState(state) {
+        localStorage.setItem('game_state', state);
+        alert(`게임 상태가 [${state}] (으)로 변경되었습니다.`);
+        checkGameState();
+    }
+
+    function resetAllData() {
+        if(confirm("모든 학생의 데이터와 게임 상태를 초기화하시겠습니까?")) {
+            localStorage.removeItem('all_students_data');
+            localStorage.setItem('game_state', 'STEP1');
+            location.reload();
+        }
+    }
+
+    function updateAdminDashboard() {
+        const allData = JSON.parse(localStorage.getItem('all_students_data') || '{}');
+        const students = Object.values(allData);
+        
+        document.getElementById('admin-count').innerText = students.length;
+        const listContainer = document.getElementById('admin-student-list');
+        listContainer.innerHTML = '';
+
+        students.forEach((std, idx) => {
+            const card = document.createElement('div');
+            card.className = 'student-result-card';
+            
+            const supportText = std.supportDream === true ? '✅ 꿈 지원' : (std.supportDream === false ? '❌ 꿈 미지원' : '⏳ 선택 중');
+            
+            card.innerHTML = `
+                <strong>학생 #${idx+1} (${std.budgetLabel})</strong><br>
+                💰 사용 자금: ${std.totalSpent}만 P<br>
+                🧬 돋보이는 형질: ${std.selectedTraits['수학 공부 능력'] || '-'}, ${std.selectedTraits['운동 신경'] || '-'}<br>
+                🌟 꿈: <strong>${std.dream || '발현 전'}</strong><br>
+                💬 부모 선택: <strong>${supportText}</strong>
+            `;
+            listContainer.appendChild(card);
+        });
+    }
+</script>
+</body>
+</html>
